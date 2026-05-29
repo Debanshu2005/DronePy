@@ -1,0 +1,63 @@
+{
+  "hardware": {
+    "flight_controller": {
+      "type": "APM2.8",
+      "port": "/dev/ttyUSB0",
+      "baud": 57600,
+      "protocol": "mavlink"
+    },
+    "sensors": [
+      {
+        "name": "camera",
+        "type": "rgb_camera",
+        "path": "/dev/video0",
+        "resolution": [1280, 720],
+        "formats": ["MJPG"]
+      },
+      {
+        "name": "thermal",
+        "type": "MLX90640",
+        "bus": "i2c-1",
+        "address": "0x33"
+      },
+      {
+        "name": "imu",
+        "type": "MPU6050",
+        "bus": "i2c-1",
+        "address": "0x68"
+      },
+      {
+        "name": "lora",
+        "type": "SX127x",
+        "bus": "spi0"
+      },
+      {
+        "name": "gps",
+        "type": "onboard_gps",
+        "source": "mavlink"
+      }
+    ],
+    "companion_computer": {
+      "type": "raspberry_pi_4b",
+      "ram_gb": 4
+    }
+  },
+  "mission_behavior": {
+    "default_altitude_m": 30,
+    "rtl_on_low_battery": true,
+    "battery_cutoff_voltage": 10.5,
+    "max_mission_duration_min": 20,
+    "log_sensor_data": true,
+    "log_interval_sec": 5
+  },
+  "planner": {
+    "model_path": "models/drone_slm.gguf",
+    "fallback": "abort",
+    "temperature": 0.1,
+    "max_tokens": 300
+  },
+  "logging": {
+    "db_path": "logs/mission_log.db",
+    "retain_days": 30
+  }
+}

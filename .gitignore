@@ -1,0 +1,23 @@
+# Workspace memory and local AI context
+workspace.json
+workspacememory.md
+graphify-out/
+
+# Python cache and test artifacts
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+
+# Local runtime state
+.dronepy/
+logs/
+
+# Local virtual environments
+.venv/
+venv/
+env/
+
+# OS/editor noise
+.DS_Store
+Thumbs.db
