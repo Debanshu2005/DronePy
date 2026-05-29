@@ -59,6 +59,20 @@ class TrainingAssetsTests(unittest.TestCase):
         )
         self.assertEqual(training_prompt, runtime_prompt)
 
+    def test_grouped_example_sets_validate_and_total_over_fifty(self) -> None:
+        planner_dataset = load_training_module()
+        grouped_paths = [
+            TRAINING_DIR / "examples" / "normal_missions.jsonl",
+            TRAINING_DIR / "examples" / "degraded_cases.jsonl",
+            TRAINING_DIR / "examples" / "emergency_cases.jsonl",
+        ]
+        total = 0
+        for path in grouped_paths:
+            examples = planner_dataset.load_jsonl(path)
+            self.assertGreater(len(examples), 0)
+            total += len(examples)
+        self.assertGreaterEqual(total, 50)
+
 
 if __name__ == "__main__":
     unittest.main()
