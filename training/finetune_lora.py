@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 from pathlib import Path
+from typing import Any
 
 from planner_dataset import format_supervised_text, load_jsonl
 
@@ -15,10 +16,35 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--output-dir", required=True, help="Directory for LoRA checkpoints")
     parser.add_argument("--epochs", type=int, default=3, help="Training epochs")
     parser.add_argument("--learning-rate", type=float, default=2e-4, help="LoRA learning rate")
-    parser.add_argument("--batch-size", type=int, default=2, help="Per-device train batch size")
-    parser.add_argument("--grad-accum", type=int, default=8, help="Gradient accumulation steps")
-    parser.add_argument("--max-seq-length", type=int, default=1024, help="Tokenizer truncation length")
+    parser.add_argument("--batch-size", type=int, default=1, help="Per-device train batch size")
+    parser.add_argument("--grad-accum", type=int, default=16, help="Gradient accumulation steps")
+    parser.add_argument("--max-seq-length", type=int, default=512, help="Tokenizer truncation length")
+    parser.add_argument("--fp16", action="store_true", help="Enable fp16 training when CUDA is available")
+    parser.add_argument(
+        "--gradient-checkpointing",
+        action="store_true",
+        help="Enable gradient checkpointing to reduce VRAM usage",
+    )
+    parser.add_argument("--load-in-8bit", action="store_true", help="Load the base model in 8-bit mode")
+    parser.add_argument("--load-in-4bit", action="store_true", help="Load the base model in 4-bit mode")
     return parser.parse_args()
+
+
+def build_model_kwargs(args: argparse.Namespace, torch_module: Any, transformers_module: Any) -> dict[str, Any]:
+    """Build memory-aware model loading kwargs for small-GPU LoRA training."""
+    kwargs: dict[str, Any] = {"low_cpu_mem_usage": True}
+    if torch_module.cuda.is_available():
+        kwargs["device_map"] = "auto"
+    if args.load_in_4bit:
+        kwargs["quantization_config"] = transformers_module.BitsAndBytesConfig(
+            load_in_4bit=True,
+            bnb_4bit_quant_type="nf4",
+            bnb_4bit_use_double_quant=True,
+            bnb_4bit_compute_dtype=torch_module.float16,
+        )
+    elif args.load_in_8bit:
+        kwargs["quantization_config"] = transformers_module.BitsAndBytesConfig(load_in_8bit=True)
+    return kwargs
 
 
 def main() -> None:
@@ -26,11 +52,13 @@ def main() -> None:
     try:
         from datasets import Dataset
         from peft import LoraConfig
+        import torch
+        import transformers
         from transformers import AutoModelForCausalLM, AutoTokenizer
         from trl import SFTConfig, SFTTrainer
     except ImportError as exc:  # pragma: no cover
         raise SystemExit(
-            "Missing training dependencies. Install datasets, transformers, peft, accelerate, and trl."
+            "Missing training dependencies. Install datasets, transformers, peft, accelerate, trl, and torch."
         ) from exc
 
     examples = load_jsonl(args.dataset)
@@ -46,7 +74,11 @@ def main() -> None:
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
 
-    model = AutoModelForCausalLM.from_pretrained(args.base_model)
+    model_kwargs = build_model_kwargs(args, torch, transformers)
+    model = AutoModelForCausalLM.from_pretrained(args.base_model, **model_kwargs)
+    if args.gradient_checkpointing:
+        model.gradient_checkpointing_enable()
+        model.config.use_cache = False
 
     peft_config = LoraConfig(
         r=16,
@@ -75,7 +107,7 @@ def main() -> None:
         logging_steps=10,
         save_strategy="epoch",
         bf16=False,
-        fp16=False,
+        fp16=bool(args.fp16 and torch.cuda.is_available()),
         max_seq_length=args.max_seq_length,
         report_to=[],
     )
@@ -104,6 +136,10 @@ def main() -> None:
                 f"learning_rate={args.learning_rate}",
                 f"batch_size={args.batch_size}",
                 f"grad_accum={args.grad_accum}",
+                f"fp16={bool(args.fp16 and torch.cuda.is_available())}",
+                f"gradient_checkpointing={args.gradient_checkpointing}",
+                f"load_in_8bit={args.load_in_8bit}",
+                f"load_in_4bit={args.load_in_4bit}",
             ]
         ),
         encoding="utf-8",
@@ -112,4 +148,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

@@ -6,6 +6,7 @@ import json
 from typing import Any
 
 from ..capability_profile import CapabilityProfile
+from .prompt_builder import build_planner_prompt
 
 try:
     from llama_cpp import Llama
@@ -20,33 +21,15 @@ def build_prompt(
     behavior: dict[str, Any],
 ) -> str:
     """Build the planner prompt from instruction, hardware, and mission history."""
-    device_list = ", ".join(f"{sensor['name']}({sensor['type']})" for sensor in profile.all_sensors())
-
-    past_context = ""
-    for mission in recent_missions:
-        past_context += (
-            f"- {mission['task_type']}: {mission['outcome']} "
-            f"(battery {mission['battery_start_v']}V→{mission['battery_end_v']}V)\n"
-        )
-
-    return f"""### Instruction:
-{instruction}
-
-### Hardware:
-FC: {profile.fc.controller_family} | Armed: {profile.fc.armed}
-Sensors: {device_list}
-Battery: {profile.fc.battery_voltage}V
-
-### Behavior Rules:
-Default altitude: {behavior['default_altitude_m']}m
-RTL on low battery: {behavior['rtl_on_low_battery']}
-Battery cutoff: {behavior['battery_cutoff_voltage']}V
-Max duration: {behavior['max_mission_duration_min']}min
-
-### Recent Mission History:
-{past_context or 'No previous missions.'}
-
-### Response:"""
+    return build_planner_prompt(
+        instruction=instruction,
+        controller_family=profile.fc.controller_family,
+        armed=profile.fc.armed,
+        battery_voltage=profile.fc.battery_voltage,
+        sensors=profile.all_sensors(),
+        behavior=behavior,
+        recent_missions=recent_missions,
+    )
 
 
 class SLMPlanner:
@@ -135,4 +118,3 @@ class SLMPlanner:
             "steps": [{"action": "rtl", "device": "fc", "params": {}}],
             "warning": warning,
         }
-

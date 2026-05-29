@@ -4,6 +4,10 @@ import importlib.util
 from pathlib import Path
 import unittest
 
+from dronepy.capability_profile import CapabilityProfile
+from dronepy.planner.slm_planner import build_prompt as runtime_build_prompt
+from dronepy.schemas import FCCapabilities
+
 
 TRAINING_DIR = Path(__file__).resolve().parents[1] / "training"
 
@@ -32,6 +36,28 @@ class TrainingAssetsTests(unittest.TestCase):
         self.assertIn("### Behavior Rules:", prompt)
         self.assertIn("### Recent Mission History:", prompt)
         self.assertIn("### Response:", prompt)
+
+    def test_training_prompt_matches_runtime_prompt(self) -> None:
+        planner_dataset = load_training_module()
+        example = planner_dataset.load_jsonl(TRAINING_DIR / "examples" / "planner_examples.jsonl")[0]
+        training_prompt = planner_dataset.build_prompt(example)
+
+        profile = CapabilityProfile(
+            sensors=example["hardware"]["sensors"],
+            fc=FCCapabilities(
+                controller_family=example["hardware"]["fc"]["controller_family"],
+                armed=example["hardware"]["fc"]["armed"],
+                battery_voltage=example["hardware"]["fc"]["battery_voltage"],
+                reachable=True,
+            ),
+        )
+        runtime_prompt = runtime_build_prompt(
+            example["instruction"],
+            profile,
+            example["recent_missions"],
+            example["behavior"],
+        )
+        self.assertEqual(training_prompt, runtime_prompt)
 
 
 if __name__ == "__main__":

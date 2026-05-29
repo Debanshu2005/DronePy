@@ -6,6 +6,8 @@ import json
 from pathlib import Path
 from typing import Any
 
+from dronepy.planner.prompt_builder import build_planner_prompt
+
 REQUIRED_TOP_LEVEL = {
     "instruction",
     "hardware",
@@ -71,37 +73,15 @@ def build_prompt(example: dict[str, Any]) -> str:
     validate_example(example)
 
     fc = example["hardware"]["fc"]
-    sensors = example["hardware"]["sensors"]
-    behavior = example["behavior"]
-    recent_missions = example["recent_missions"]
-
-    device_list = ", ".join(f"{sensor['name']}({sensor['type']})" for sensor in sensors)
-
-    past_context = ""
-    for mission in recent_missions:
-        past_context += (
-            f"- {mission['task_type']}: {mission['outcome']} "
-            f"(battery {mission['battery_start_v']}V->{mission['battery_end_v']}V)\n"
-        )
-
-    return f"""### Instruction:
-{example['instruction']}
-
-### Hardware:
-FC: {fc['controller_family']} | Armed: {fc['armed']}
-Sensors: {device_list}
-Battery: {fc['battery_voltage']}V
-
-### Behavior Rules:
-Default altitude: {behavior['default_altitude_m']}m
-RTL on low battery: {behavior['rtl_on_low_battery']}
-Battery cutoff: {behavior['battery_cutoff_voltage']}V
-Max duration: {behavior['max_mission_duration_min']}min
-
-### Recent Mission History:
-{past_context or 'No previous missions.'}
-
-### Response:"""
+    return build_planner_prompt(
+        instruction=example["instruction"],
+        controller_family=fc["controller_family"],
+        armed=fc["armed"],
+        battery_voltage=fc["battery_voltage"],
+        sensors=example["hardware"]["sensors"],
+        behavior=example["behavior"],
+        recent_missions=example["recent_missions"],
+    )
 
 
 def format_supervised_text(example: dict[str, Any]) -> str:
@@ -109,4 +89,3 @@ def format_supervised_text(example: dict[str, Any]) -> str:
     prompt = build_prompt(example)
     response = json.dumps(example["response"], indent=2, sort_keys=True)
     return f"{prompt}\n{response}"
-

@@ -16,7 +16,12 @@ Example:
 python training/finetune_lora.py ^
   --dataset training/examples/planner_examples.jsonl ^
   --base-model TinyLlama/TinyLlama-1.1B-Chat-v1.0 ^
-  --output-dir training/out/tinydrone_lora
+  --output-dir training/out/tinydrone_lora ^
+  --batch-size 1 ^
+  --grad-accum 16 ^
+  --max-seq-length 512 ^
+  --fp16 ^
+  --gradient-checkpointing
 ```
 
 ## 2. Merge the adapter
@@ -91,4 +96,3 @@ The model should reliably emit:
 - Keep the action vocabulary narrow during early training.
 - Include degraded and emergency examples in the dataset.
 - DronePy's safety layer still overrides unsafe plans after inference.
-
