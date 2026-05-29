@@ -99,7 +99,6 @@ def main() -> None:
 
     training_args = SFTConfig(
         output_dir=str(output_dir),
-        overwrite_output_dir=True,
         num_train_epochs=args.epochs,
         per_device_train_batch_size=args.batch_size,
         gradient_accumulation_steps=args.grad_accum,
@@ -108,17 +107,17 @@ def main() -> None:
         save_strategy="epoch",
         bf16=False,
         fp16=bool(args.fp16 and torch.cuda.is_available()),
-        max_seq_length=args.max_seq_length,
+        max_length=args.max_seq_length,
+        dataset_text_field="text",
         report_to=[],
     )
 
     trainer = SFTTrainer(
         model=model,
         train_dataset=dataset,
-        tokenizer=tokenizer,
+        processing_class=tokenizer,
         peft_config=peft_config,
         args=training_args,
-        dataset_text_field="text",
     )
 
     trainer.train()
