@@ -25,6 +25,12 @@ Typical workflow:
 4. Convert and quantize to GGUF using `training/export_gguf.md`.
 5. Place the final file at `models/drone_slm.gguf`.
 
+On Windows, start Python in UTF-8 mode for `trl`:
+
+```powershell
+python -X utf8 training/finetune_lora.py ...
+```
+
 Recommended starting point for an `8 GB RAM + GTX 1650` laptop:
 
 - base model: `TinyLlama/TinyLlama-1.1B-Chat-v1.0`

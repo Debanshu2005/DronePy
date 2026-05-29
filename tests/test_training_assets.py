@@ -73,6 +73,11 @@ class TrainingAssetsTests(unittest.TestCase):
             total += len(examples)
         self.assertGreaterEqual(total, 50)
 
+    def test_full_dataset_validates(self) -> None:
+        planner_dataset = load_training_module()
+        examples = planner_dataset.load_jsonl(TRAINING_DIR / "examples" / "full_planner_dataset.jsonl")
+        self.assertGreaterEqual(len(examples), 50)
+
 
 if __name__ == "__main__":
     unittest.main()

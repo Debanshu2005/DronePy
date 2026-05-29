@@ -13,7 +13,7 @@ procedure schema.
 Example:
 
 ```bash
-python training/finetune_lora.py ^
+python -X utf8 training/finetune_lora.py ^
   --dataset training/examples/planner_examples.jsonl ^
   --base-model TinyLlama/TinyLlama-1.1B-Chat-v1.0 ^
   --output-dir training/out/tinydrone_lora ^
