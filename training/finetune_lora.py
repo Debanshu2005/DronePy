@@ -35,6 +35,8 @@ def build_model_kwargs(args: argparse.Namespace, torch_module: Any, transformers
     kwargs: dict[str, Any] = {"low_cpu_mem_usage": True}
     if torch_module.cuda.is_available():
         kwargs["device_map"] = "auto"
+        if args.fp16:
+            kwargs["torch_dtype"] = torch_module.float16
     if args.load_in_4bit:
         kwargs["quantization_config"] = transformers_module.BitsAndBytesConfig(
             load_in_4bit=True,
