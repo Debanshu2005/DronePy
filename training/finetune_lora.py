@@ -53,7 +53,7 @@ def main() -> None:
     args = parse_args()
     try:
         from datasets import Dataset
-        from peft import LoraConfig
+        from peft import LoraConfig, prepare_model_for_kbit_training
         import torch
         import transformers
         from transformers import AutoModelForCausalLM, AutoTokenizer
@@ -78,6 +78,8 @@ def main() -> None:
 
     model_kwargs = build_model_kwargs(args, torch, transformers)
     model = AutoModelForCausalLM.from_pretrained(args.base_model, **model_kwargs)
+    if args.load_in_8bit or args.load_in_4bit:
+        model = prepare_model_for_kbit_training(model)
     if args.gradient_checkpointing:
         model.gradient_checkpointing_enable()
         model.config.use_cache = False
@@ -105,6 +107,7 @@ def main() -> None:
         per_device_train_batch_size=args.batch_size,
         gradient_accumulation_steps=args.grad_accum,
         learning_rate=args.learning_rate,
+        optim="paged_adamw_32bit" if (args.load_in_8bit or args.load_in_4bit) else "adamw_torch",
         logging_steps=10,
         save_strategy="epoch",
         bf16=False,
