@@ -57,10 +57,21 @@ python -m dronepy "track a target and stream video"
 The default CLI uses a null planner, so it performs discovery and safety
 preparation but will not generate a mission until you inject a planner model.
 
+## Training
+
+The repo now includes a `training/` folder with:
+
+- planner dataset schema
+- example JSONL mission data
+- LoRA fine-tuning script
+- LoRA merge script
+- GGUF export instructions aligned to DronePy's planner prompt format
+
+Start with [training/README.md](D:/CityGrid/my-project/DronePy/training/README.md).
+
 ## Next Steps
 
 1. Plug in a real learned planner that emits `MissionPlan`.
 2. Add MAVLink/DroneCAN adapters with live protocol probing.
 3. Feed execution outcomes back into `ProfileStore` for capability learning.
 4. Add platform-specific providers for Raspberry Pi GPIO, CSI cameras, and I2C.
-

@@ -1,0 +1,134 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "DronePy Planner Training Example",
+  "type": "object",
+  "required": [
+    "instruction",
+    "hardware",
+    "behavior",
+    "recent_missions",
+    "response"
+  ],
+  "properties": {
+    "instruction": {
+      "type": "string",
+      "minLength": 1
+    },
+    "hardware": {
+      "type": "object",
+      "required": [
+        "fc",
+        "sensors"
+      ],
+      "properties": {
+        "fc": {
+          "type": "object",
+          "required": [
+            "controller_family",
+            "armed",
+            "battery_voltage"
+          ],
+          "properties": {
+            "controller_family": {
+              "type": "string"
+            },
+            "armed": {
+              "type": "boolean"
+            },
+            "battery_voltage": {
+              "type": [
+                "number",
+                "null"
+              ]
+            }
+          }
+        },
+        "sensors": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "name",
+              "type"
+            ],
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "type": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "behavior": {
+      "type": "object",
+      "required": [
+        "default_altitude_m",
+        "rtl_on_low_battery",
+        "battery_cutoff_voltage",
+        "max_mission_duration_min"
+      ]
+    },
+    "recent_missions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "task_type",
+          "outcome",
+          "battery_start_v",
+          "battery_end_v"
+        ]
+      }
+    },
+    "response": {
+      "type": "object",
+      "required": [
+        "task",
+        "confidence",
+        "steps",
+        "warning"
+      ],
+      "properties": {
+        "task": {
+          "type": "string"
+        },
+        "confidence": {
+          "type": "number"
+        },
+        "steps": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "action",
+              "device",
+              "params"
+            ],
+            "properties": {
+              "action": {
+                "type": "string"
+              },
+              "device": {
+                "type": "string"
+              },
+              "params": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "warning": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    }
+  }
+}
+
